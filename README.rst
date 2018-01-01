@@ -16,6 +16,13 @@ Requirements
 
 tmux, and that's it!
 
+Installation
+------------
+
+::
+
+  pip install tmuxprocess
+
 Usage
 -----
 
