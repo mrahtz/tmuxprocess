@@ -6,7 +6,7 @@ the same terminal, things can get very confusing.
 
 ``TmuxProcess`` is an extension of the ``multiprocessing`` ``Process`` class which
 automatically sets up a tmux session with a separate tmux window for each
-process.  With standard output for each process linked to a separate window,
+process created. With standard output for each process linked to a separate window,
 it's much easier to keep track of what each individual process is doing.
 (Standard input can also be tied to each separate window, so you can also send
 different commands to different processes.)
@@ -37,6 +37,13 @@ If you only care about standard output being redirected::
     p1.start()
     p2 = TmuxProcess(target=f, args=("f2", ))
     p2.start()
+
+Input and output from the main process will remain on the launching terminal.
+When the first process is created, a new tmux session will be launched in the
+background, a new tmux window created in that session, and standard output
+redirected to that window. When the second process is created, a second tmux
+window will be created in the same session, and its standard output similarly
+redirected.
 
 If you also want standard input redirection, initialise with ``mode='inout'``::
 
