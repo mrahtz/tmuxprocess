@@ -12,7 +12,7 @@ class TmuxProcess(Process):
 
         out_fname = os.path.join(tmpdir, 'stdout')
         os.mkfifo(out_fname)
-        
+
         if mode == 'outonly':
             cmd = 'cat {}'.format(out_fname)
         elif mode == 'inout':
@@ -45,7 +45,6 @@ class TmuxProcess(Process):
         self.out_fifo = open(out_fname, 'w', buffering=1)
         if mode != 'outonly':
             self.in_fifo = open(in_fname, 'r', buffering=1)
-
 
     def run(self):
         sys._stdout = sys.stdout
