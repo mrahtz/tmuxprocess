@@ -9,19 +9,22 @@ class TmuxProcess(Process):
 
     def __init__(self, mode='outonly', *args, **kwargs):
         tmpdir = tempfile.mkdtemp()
+        if mode not in ['outonly', 'inout']:
+            raise ValueError("Invalid mode '{}'".format(mode))
+        self.mode = mode
 
-        out_fname = os.path.join(tmpdir, 'stdout')
-        os.mkfifo(out_fname)
-
-        if mode == 'outonly':
-            cmd = 'cat {}'.format(out_fname)
-        elif mode == 'inout':
+        self.out_fifos = {}
+        out_fnames = {}
+        for name in ['stdout', 'stderr']:
+            out_fnames[name] = os.path.join(tmpdir, name)
+            os.mkfifo(out_fnames[name])
+        if mode == 'inout':
             in_fname = os.path.join(tmpdir, 'stdin')
             os.mkfifo(in_fname)
-            cmd = 'cat {} & cat > {}'.format(out_fname, in_fname)
-        else:
-            raise ValueError("invalid mode '%s'" % mode)
-        self.mode = mode
+
+        cmd = 'cat {} & cat {}'.format(out_fnames['stdout'], out_fnames['stderr'])
+        if mode == 'inout':
+            cmd += ' & cat > {}'.format(in_fname)
 
         Process.__init__(self, *args, **kwargs)
 
@@ -41,14 +44,18 @@ class TmuxProcess(Process):
             os.system("tmux new-window -d -n {} '{}'".format(self.name, cmd))
         self.tmux_sess = TmuxProcess.tmux_sess
 
+        # Done /after/ attaching to the pipes, so that open doesn't block
         # buffering=1 gives line buffering
-        self.out_fifo = open(out_fname, 'w', buffering=1)
-        if mode != 'outonly':
+        for name in ['stdout', 'stderr']:
+            self.out_fifos[name] = open(out_fnames[name], 'w', buffering=1)
+        if mode == 'inout':
             self.in_fifo = open(in_fname, 'r', buffering=1)
 
     def run(self):
         sys._stdout = sys.stdout
-        sys.stdout = self.out_fifo
+        sys._stderr = sys.stderr
+        sys.stdout = self.out_fifos['stdout']
+        sys.stderr = self.out_fifos['stderr']
         if self.mode == 'inout':
             sys._stdin = sys.stdin
             sys.stdin = self.in_fifo
