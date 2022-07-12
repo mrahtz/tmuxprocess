@@ -8,6 +8,9 @@ class TmuxProcess(Process):
     tmux_sess = None
 
     def __init__(self, mode='outonly', *args, **kwargs):
+
+        print("Custom TmuxProcess")
+        
         tmpdir = tempfile.mkdtemp()
         if mode not in ['outonly', 'inout']:
             raise ValueError("Invalid mode '{}'".format(mode))
@@ -35,13 +38,10 @@ class TmuxProcess(Process):
             os.system("tmux new-sess -s {} -n {} -d '{}'".
                       format(TmuxProcess.tmux_sess, self.name, cmd))
         else:
-            # There doesn't seem to be an easy way to create a new window
-            # in a specific sesssion - only to create one in the current tmux_sess.
-            # So we just have to hope the user doesn't interact with tmux
-            # before the creation of the last process.
             # -d: don't make the new window current (so that when the user
             #     attaches the first process is shown)
-            os.system("tmux new-window -d -n {} '{}'".format(self.name, cmd))
+            # -t: attach window to specific session
+            os.system("tmux new-window -d -n {} -t {}: '{}'".format(self.name, TmuxProcess.tmux_sess, cmd))
         self.tmux_sess = TmuxProcess.tmux_sess
 
         # Done /after/ attaching to the pipes, so that open doesn't block
