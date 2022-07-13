@@ -8,9 +8,6 @@ class TmuxProcess(Process):
     tmux_sess = None
 
     def __init__(self, mode='outonly', *args, **kwargs):
-
-        print("Custom TmuxProcess")
-        
         tmpdir = tempfile.mkdtemp()
         if mode not in ['outonly', 'inout']:
             raise ValueError("Invalid mode '{}'".format(mode))
